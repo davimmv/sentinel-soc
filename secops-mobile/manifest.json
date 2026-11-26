@@ -1,0 +1,19 @@
+{
+    "name": "Sentinel SOC — Incident Tracker",
+    "short_name": "Sentinel SOC",
+    "description": "Monitoramento de ativos, incidentes, auditoria, correlação de IOCs e SLA.",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#09090B",
+    "theme_color": "#09090B",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/2092/2092663.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

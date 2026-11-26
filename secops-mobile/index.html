@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#09090B">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="./manifest.json">
+    <title>Sentinel SOC — Monitoramento de Ativos e Incidentes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        base: '#09090B',
+                        surface: '#111113',
+                        card: '#18181B',
+                        line: '#27272A',
+                        ink: '#FAFAFA',
+                        muted: '#A1A1AA',
+                        subtle: '#71717A',
+                        brand: '#3B82F6',
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        body {
+            background-color: #09090B;
+            color: #FAFAFA;
+            font-size: 15px;
+            line-height: 1.55;
+            margin: 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .touch-target {
+            min-height: 44px;
+        }
+
+        .field-dark {
+            background-color: #18181B;
+            border: 1px solid #27272A;
+            border-radius: 10px;
+            color: #FAFAFA;
+        }
+
+        .field-dark:focus {
+            outline: none;
+            border-color: #3B82F6;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col max-w-md mx-auto bg-base border-x border-line">
+    <header
+        class="sticky top-0 z-20 bg-base/90 backdrop-blur-md border-b border-line px-4 py-3.5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div
+                class="w-9 h-9 rounded-[10px] bg-card border border-line flex items-center justify-center text-ink font-bold text-xs">
+                SOC</div>
+            <div>
+                <h1 class="text-base font-bold text-ink">Sentinel SOC</h1>
+                <p class="text-xs text-muted">Monitoramento de Ativos e Incidentes</p>
+            </div>
+        </div>
+        <span id="status-rede-badge"
+            class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-card text-ink border border-line">
+            <span id="status-rede-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span id="status-rede-texto">Online</span>
+        </span>
+    </header>
+
+    <main class="flex-1 p-4 pb-24 space-y-5 overflow-y-auto">
+        <section id="view-home" class="space-y-5">
+            <div class="bg-surface border border-line rounded-2xl p-4 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-semibold text-ink">Panorama Operacional</h2>
+                    <span class="text-xs text-subtle">Tempo real</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2.5">
+                    <div class="bg-card border border-line rounded-xl p-3">
+                        <span class="block text-xs text-muted mb-1">Total</span>
+                        <span id="stat-total" class="block text-2xl font-bold text-ink">0</span>
+                    </div>
+                    <div class="bg-card border border-line rounded-xl p-3">
+                        <span class="block text-xs text-muted mb-1">Críticos</span>
+                        <span id="stat-criticos" class="block text-2xl font-bold text-red-400">0</span>
+                    </div>
+                    <div class="bg-card border border-line rounded-xl p-3">
+                        <span class="block text-xs text-muted mb-1">Mitigados</span>
+                        <span id="stat-resolvidos" class="block text-2xl font-bold text-emerald-400">0</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2.5 pt-1 border-t border-line">
+                    <div class="bg-card border border-line rounded-xl p-3">
+                        <span class="block text-[11px] text-muted mb-0.5">MTTA Médio</span>
+                        <span id="stat-mtta" class="block text-sm font-bold text-ink">—</span>
+                    </div>
+                    <div class="bg-card border border-line rounded-xl p-3">
+                        <span class="block text-[11px] text-muted mb-0.5">MTTR Médio</span>
+                        <span id="stat-mttr" class="block text-sm font-bold text-ink">—</span>
+                    </div>
+                    <div class="bg-card border border-line rounded-xl p-3">
+                        <span class="block text-[11px] text-muted mb-0.5">SLA Estourado</span>
+                        <span id="stat-sla-violado" class="block text-sm font-bold text-amber-400">0</span>
+                    </div>
+                </div>
+                <p class="text-[11px] text-subtle">SLA alvo: Crítica 1h · Alta 4h · Média 24h · Baixa 72h</p>
+            </div>
+
+            <div class="space-y-2.5">
+                <button type="button" onclick="navegarPara('create')"
+                    class="w-full touch-target bg-brand hover:bg-blue-500 text-white font-medium rounded-[10px] px-4 py-3 flex items-center justify-between">
+                    <span>+ Reportar Novo Incidente</span><span>→</span>
+                </button>
+                <button type="button" onclick="navegarPara('list')"
+                    class="w-full touch-target bg-surface hover:bg-card border border-line text-ink font-medium rounded-[10px] px-4 py-3 flex items-center justify-between">
+                    <span>Visualizar Fila de Incidentes</span><span class="text-muted">→</span>
+                </button>
+            </div>
+
+            <div class="bg-surface border border-line rounded-2xl p-4 space-y-2">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-muted">Último Registro Crítico</h3>
+                    <span class="text-[11px] text-red-400 font-medium">Atenção</span>
+                </div>
+                <div id="home-recent-alert" class="text-sm text-muted">Nenhum incidente crítico ativo no momento.</div>
+            </div>
+
+            <div class="bg-surface border border-line rounded-2xl p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-muted">Backup e Portabilidade (JSON)
+                    </h3>
+                    <span class="text-[11px] text-subtle">Incidentes + Auditoria</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button type="button" id="btn-exportar-json"
+                        class="touch-target bg-card hover:bg-zinc-800 border border-line text-ink font-medium rounded-[10px] px-3 py-2.5 text-xs">
+                        Exportar JSON
+                    </button>
+                    <button type="button" id="btn-importar-json"
+                        class="touch-target bg-card hover:bg-zinc-800 border border-line text-ink font-medium rounded-[10px] px-3 py-2.5 text-xs">
+                        Importar JSON
+                    </button>
+                </div>
+                <input type="file" id="input-importar-json" accept="application/json,.json" class="hidden">
+                <p id="status-portabilidade" class="text-xs text-subtle">Exporta ou restaura a fila completa com
+                    histórico de eventos.</p>
+            </div>
+        </section>
+
+        <section id="view-list" class="hidden space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-ink">Fila de Incidentes</h2>
+                    <p class="text-xs text-muted">Toque em um item para editar, auditar ou excluir</p>
+                </div>
+                <button type="button" onclick="navegarPara('create')"
+                    class="touch-target px-3.5 py-2 bg-brand hover:bg-blue-500 text-white text-xs font-semibold rounded-[10px]">+
+                    Novo</button>
+            </div>
+
+            <div class="bg-surface border border-line rounded-2xl p-3.5 space-y-3">
+                <input type="search" id="filtro-busca" placeholder="Buscar por ID, ativo, IOC, ameaça ou analista..."
+                    class="field-dark w-full touch-target px-3.5 py-2 text-sm">
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label for="filtro-severidade"
+                            class="block text-[11px] font-medium text-muted mb-1">Severidade</label>
+                        <select id="filtro-severidade" class="field-dark w-full touch-target px-3 py-2 text-xs">
+                            <option value="Todas">Todas</option>
+                            <option value="Crítica">Crítica</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Média">Média</option>
+                            <option value="Baixa">Baixa</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="filtro-status" class="block text-[11px] font-medium text-muted mb-1">Status</label>
+                        <select id="filtro-status" class="field-dark w-full touch-target px-3 py-2 text-xs">
+                            <option value="Todos">Todos</option>
+                            <option value="Aberto">Aberto</option>
+                            <option value="Em Contenção">Em Contenção</option>
+                            <option value="Mitigado">Mitigado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span id="contador-filtros" class="text-subtle">0 de 0 exibidos</span>
+                    <button type="button" id="btn-limpar-filtros" class="text-muted hover:text-ink font-medium">Limpar
+                        filtros</button>
+                </div>
+            </div>
+
+            <div id="lista-incidentes" class="space-y-3"></div>
+        </section>
+
+        <section id="view-create" class="hidden space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold text-ink">Registrar Incidente</h2>
+                <button type="button" onclick="navegarPara('list')"
+                    class="text-xs font-medium text-muted hover:text-ink touch-target px-2">Cancelar</button>
+            </div>
+
+            <div id="alerta-duplicidade"
+                class="hidden bg-amber-500/10 border border-amber-500/40 rounded-2xl p-4 space-y-3">
+                <div class="space-y-1">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-amber-400">Possível Duplicidade /
+                        Correlação Ativa</p>
+                    <p id="texto-duplicidade" class="text-xs text-ink leading-relaxed"></p>
+                    <div id="lista-duplicados" class="space-y-1.5 pt-1"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" id="btn-correlacionar-existente"
+                        class="touch-target bg-card hover:bg-zinc-800 border border-line text-ink font-medium rounded-[10px] px-3 py-2 text-xs">
+                        Anexar ao Ativo Existente
+                    </button>
+                    <button type="button" id="btn-forcar-criacao"
+                        class="touch-target bg-brand hover:bg-blue-500 text-white font-semibold rounded-[10px] px-3 py-2 text-xs">
+                        Criar Novo Mesmo Assim
+                    </button>
+                </div>
+            </div>
+
+            <form id="form-create" class="bg-surface border border-line rounded-2xl p-4 space-y-4">
+                <div>
+                    <label for="create-ativo" class="block text-xs font-medium text-muted mb-1.5">Hostname ou IP do
+                        Ativo *</label>
+                    <input type="text" id="create-ativo" required placeholder="Ex: SRV-DB-01 (10.0.1.45)"
+                        class="field-dark w-full touch-target px-3.5 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label for="create-ioc" class="block text-xs font-medium text-muted mb-1.5">IOC (IP origem, domínio,
+                        porta, hash ou CVE)</label>
+                    <input type="text" id="create-ioc" placeholder="Ex: 185.220.101.4 ou CVE-2024-3094"
+                        class="field-dark w-full touch-target px-3.5 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label for="create-categoria" class="block text-xs font-medium text-muted mb-1.5">Categoria da
+                        Ameaça / Falha *</label>
+                    <input type="text" id="create-categoria" required placeholder="Ex: Brute Force SSH / Porta Exposta"
+                        class="field-dark w-full touch-target px-3.5 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label for="create-severidade" class="block text-xs font-medium text-muted mb-1.5">Severidade
+                        *</label>
+                    <select id="create-severidade" class="field-dark w-full touch-target px-3.5 py-2.5 text-sm">
+                        <option value="Baixa">Baixa</option>
+                        <option value="Média">Média</option>
+                        <option value="Alta">Alta</option>
+                        <option value="Crítica" selected>Crítica</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="create-analista" class="block text-xs font-medium text-muted mb-1.5">Analista
+                        Responsável *</label>
+                    <input type="text" id="create-analista" required placeholder="Ex: Davi Viana"
+                        class="field-dark w-full touch-target px-3.5 py-2.5 text-sm">
+                </div>
+                <button type="submit"
+                    class="w-full touch-target bg-brand hover:bg-blue-500 text-white font-semibold text-sm rounded-[10px] py-3">Salvar
+                    Registro</button>
+            </form>
+        </section>
+
+        <section id="view-edit" class="hidden space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold text-ink">Gerenciar Incidente</h2>
+                <button type="button" onclick="navegarPara('list')"
+                    class="text-xs font-medium text-muted hover:text-ink touch-target px-2">Voltar</button>
+            </div>
+
+            <div id="resumo-sla-edit"
+                class="bg-surface border border-line rounded-2xl p-3.5 flex items-center justify-between text-xs"></div>
+
+            <form id="form-edit" class="bg-surface border border-line rounded-2xl p-4 space-y-4">
+                <input type="hidden" id="edit-id">
+                <div>
+                    <label for="edit-id-display" class="block text-xs font-medium text-subtle mb-1">ID do
+                        Registro</label>
+                    <input type="text" id="edit-id-display" disabled
+                        class="w-full bg-base border border-line rounded-[10px] px-3.5 py-2 text-xs text-subtle">
+                </div>
+                <div>
+                    <label for="edit-ativo" class="block text-xs font-medium text-muted mb-1.5">Hostname ou IP do Ativo
+                        *</label>
+                    <input type="text" id="edit-ativo" required
+                        class="field-dark w-full touch-target px-3.5 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label for="edit-ioc" class="block text-xs font-medium text-muted mb-1.5">IOC (IP origem, domínio,
+                        porta, hash ou CVE)</label>
+                    <input type="text" id="edit-ioc" placeholder="Ex: 185.220.101.4 ou CVE-2024-3094"
+                        class="field-dark w-full touch-target px-3.5 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label for="edit-categoria" class="block text-xs font-medium text-muted mb-1.5">Categoria da Ameaça
+                        *</label>
+                    <input type="text" id="edit-categoria" required
+                        class="field-dark w-full touch-target px-3.5 py-2.5 text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="edit-severidade"
+                            class="block text-xs font-medium text-muted mb-1.5">Severidade</label>
+                        <select id="edit-severidade" class="field-dark w-full touch-target px-3 py-2.5 text-sm">
+                            <option value="Baixa">Baixa</option>
+                            <option value="Média">Média</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Crítica">Crítica</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="edit-status" class="block text-xs font-medium text-muted mb-1.5">Status</label>
+                        <select id="edit-status" class="field-dark w-full touch-target px-3 py-2.5 text-sm">
+                            <option value="Aberto">Aberto</option>
+                            <option value="Em Contenção">Em Contenção</option>
+                            <option value="Mitigado">Mitigado</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label for="edit-analista" class="block text-xs font-medium text-muted mb-1.5">Analista
+                        Responsável</label>
+                    <input type="text" id="edit-analista" required
+                        class="field-dark w-full touch-target px-3.5 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label for="edit-nota-auditoria" class="block text-xs font-medium text-muted mb-1.5">Observação de
+                        Auditoria (opcional)</label>
+                    <input type="text" id="edit-nota-auditoria" placeholder="Ex: IP bloqueado no firewall de borda"
+                        class="field-dark w-full touch-target px-3.5 py-2.5 text-sm">
+                </div>
+                <button type="submit"
+                    class="w-full touch-target bg-brand hover:bg-blue-500 text-white font-semibold text-sm rounded-[10px] py-3">Atualizar
+                    Incidente</button>
+            </form>
+
+            <div class="bg-surface border border-line rounded-2xl p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-muted">Incidentes Correlacionados
+                    </h3>
+                    <span id="correlacao-contador" class="text-[11px] text-subtle">0 relacionados</span>
+                </div>
+                <div id="lista-correlacionados" class="space-y-2"></div>
+            </div>
+
+            <div class="bg-surface border border-line rounded-2xl p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-muted">Trilha de Auditoria</h3>
+                    <span id="auditoria-contador" class="text-[11px] text-subtle">0 eventos</span>
+                </div>
+                <div id="trilha-auditoria" class="space-y-2.5"></div>
+            </div>
+
+            <button type="button" onclick="abrirModalDelete()"
+                class="w-full touch-target bg-surface hover:bg-red-500/10 border border-line hover:border-red-500/40 text-red-400 font-medium text-sm rounded-[10px] py-3">Excluir
+                Registro</button>
+        </section>
+    </main>
+
+    <nav
+        class="fixed bottom-0 w-full max-w-md bg-surface/95 backdrop-blur-md border-t border-line grid grid-cols-3 p-1.5 gap-1 z-20">
+        <button type="button" onclick="navegarPara('home')" id="nav-home"
+            class="touch-target rounded-[10px] py-2 text-xs font-medium text-blue-400">Início</button>
+        <button type="button" onclick="navegarPara('list')" id="nav-list"
+            class="touch-target rounded-[10px] py-2 text-xs font-medium text-slate-400">Incidentes</button>
+        <button type="button" onclick="navegarPara('create')" id="nav-create"
+            class="touch-target rounded-[10px] py-2 text-xs font-medium text-slate-400">+ Registrar</button>
+    </nav>
+
+    <div id="modal-delete" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+        <div class="bg-surface border border-line rounded-2xl max-w-sm w-full p-5 space-y-4">
+            <div class="space-y-1.5">
+                <h3 class="text-base font-bold text-ink">Excluir incidente?</h3>
+                <p class="text-sm text-muted">Esta ação remove o registro permanentemente e não pode ser desfeita.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5 pt-1">
+                <button type="button" onclick="fecharModalDelete()"
+                    class="touch-target bg-card hover:bg-zinc-800 border border-line text-ink font-medium rounded-[10px] py-2.5 text-sm">Cancelar</button>
+                <button type="button" onclick="confirmarExclusao()"
+                    class="touch-target bg-red-600 hover:bg-red-500 text-white font-medium rounded-[10px] py-2.5 text-sm">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./app.js" defer></script>
+</body>
+
+</html>
